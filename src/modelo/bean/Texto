@@ -1,0 +1,7 @@
+String semicomando = "notepad.exe";
+        String comando = "cmd /c " + semicomando;
+        try {
+            Runtime.getRuntime().exec(comando);
+        } catch (IOException ex) {
+            Logger.getLogger(frmPai.class.getName()).log(Level.SEVERE, null, ex);
+        }
