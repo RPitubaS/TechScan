@@ -5,6 +5,7 @@
  */
 package modelo.dao;
 
+import static documentosview.frmArquivo.jProgressBar2;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -23,6 +24,7 @@ import modelo.bean.ArquivoDocumentos;
 import modelo.bean.IdArquivoDocumento;
 import modelo.bean.Usuario;
 import produzirconeccao.ConexaoFirebird;
+import produzirconeccao.ConexaoFirebirdTexto;
 
 /**
  *
@@ -32,6 +34,36 @@ public class DocumentosTextosDAO {
     
     FileOutputStream output;
     InputStream input;
+    
+    public void salvar_texto_decretos(ArquivoDocumentos ad){
+       
+        Connection cnfb = ConexaoFirebirdTexto.getConnection();
+     
+        PreparedStatement stmt = null;
+        
+        try {
+            stmt = cnfb.prepareStatement("INSERT INTO DECRETOS (NOMEDOCUMENTO, TEXTODOCUMENTO)\n"
+                    + " VALUES (?, ?)");
+            
+            stmt.setString(1, ad.getNomeDocumento());
+            //stmt.setString(2, ad.getTextoDocumento());
+            //stmt.setString(3, ad.getPdf());
+            //if(ad.getFiguraDocumento() == null){
+               //stmt.setBinaryStream(4, ad.getArquivo());
+            //}else{
+              stmt.setBytes(2, ad.getFiguraDocumento());
+            //}
+            //stmt.setDate(5, ad.getData());
+            stmt.executeUpdate();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Erro no processo de Arquivamento! " + ex,
+                    "TechScan", JOptionPane.ERROR_MESSAGE);
+        }finally{
+            ConexaoFirebirdTexto.closeConnection(cnfb, stmt);
+        }
+        
+    }   
+    
     public void salvar_decretos(ArquivoDocumentos ad){
        
         Connection cnfb = ConexaoFirebird.getConnection();
@@ -60,6 +92,36 @@ public class DocumentosTextosDAO {
         }
         
     }   
+    
+    public void salvar_texto_portarias(ArquivoDocumentos ad){
+    
+        Connection cnfb = ConexaoFirebirdTexto.getConnection();
+        
+        PreparedStatement stmt = null;
+        
+        try{
+            stmt = cnfb.prepareStatement("INSERT INTO PORTARIA (NOMEDOCUMENTO, TEXTODOCUMENTO)\n"
+                     + " VALUES (?, ?)");
+            
+            stmt.setString(1, ad.getNomeDocumento());
+            //stmt.setString(2, ad.getTextoDocumento());
+            //stmt.setString(3, ad.getPdf());
+            //if(ad.getFiguraDocumento() == null){
+               //stmt.setBinaryStream(4, ad.getArquivo());
+            //}else{
+               stmt.setBytes(2, ad.getFiguraDocumento());
+            //}
+            //stmt.setDate(5, ad.getData());
+            stmt.executeUpdate();
+        }catch (SQLException ex){
+           JOptionPane.showMessageDialog(null, "Erro no processo de Arquivamento! " + ex,
+                   "TechScan", JOptionPane.ERROR_MESSAGE);
+        }finally{
+            ConexaoFirebirdTexto.closeConnection(cnfb, stmt);
+        
+        }
+            
+      }
     
     public void salvar_portarias(ArquivoDocumentos ad){
     
@@ -192,7 +254,7 @@ public class DocumentosTextosDAO {
             arqdoc.setId(rs.getInt("ID"));
             arqdoc.setNomeDocumento(rs.getString("NOMEDOCUMENTO"));
             arqdoc.setPdf(rs.getString("PDF"));
-            //arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
+            arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
             //arqdoc.setFiguraDocumento(rs.getBytes("FIGURADOCUMENTO"));
             //arqdoc.setData(rs.getDate("DATA"));
             selecionadocumentos.add(arqdoc);
@@ -221,7 +283,7 @@ public class DocumentosTextosDAO {
             arqdoc.setId(rs.getInt("ID"));
             arqdoc.setNomeDocumento(rs.getString("NOMEDOCUMENTO"));
             arqdoc.setPdf(rs.getString("PDF"));
-            //arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
+            arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
             //arqdoc.setFiguraDocumento(rs.getBytes("FIGURADOCUMENTO"));
             //arqdoc.setData(rs.getDate("DATA"));
             selecionadocumentos.add(arqdoc);
@@ -235,21 +297,24 @@ public class DocumentosTextosDAO {
          return selecionadocumentos;
     }
     
-    public String selecionardecreto(String documento){
-         Connection con = ConexaoFirebird.getConnection();
+    public List<ArquivoDocumentos> selecionardecretotexto(String documento){
+         Connection con = ConexaoFirebirdTexto.getConnection();
          PreparedStatement stmt = null;
          ResultSet rs = null;
-          String selecionadocumentos = "";
+          List<ArquivoDocumentos> selecionadocumentos = new ArrayList<>();
          
         try {
-            stmt = con.prepareStatement("SELECT NOMEDOCUMENTO FROM DECRETOS \n"+
+            stmt = con.prepareStatement("SELECT NOMEDOCUMENTO, TEXTODOCUMENTO FROM DECRETOS \n"+
                     "WHERE NOMEDOCUMENTO = ?");
            
             stmt.setString(1, documento);
             rs = stmt.executeQuery();
             
                              while (rs.next()){
-                              selecionadocumentos = rs.getString("NOMEDOCUMENTO");
+                              ArquivoDocumentos arqdoc = new ArquivoDocumentos();
+                              arqdoc.setNomeDocumento(rs.getString("NOMEDOCUMENTO"));
+                              arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
+                              selecionadocumentos.add(arqdoc);
                              }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null,"Erro no processo de busca! " + ex,
@@ -261,21 +326,82 @@ public class DocumentosTextosDAO {
         return selecionadocumentos;
     }
     
-    public String selecionarportaria(String documento){
+    public List<ArquivoDocumentos> selecionardecreto(String documento){
          Connection con = ConexaoFirebird.getConnection();
          PreparedStatement stmt = null;
          ResultSet rs = null;
-          String selecionadocumentos = "";
+          List<ArquivoDocumentos> selecionadocumentos = new ArrayList<>();
          
         try {
-            stmt = con.prepareStatement("SELECT NOMEDOCUMENTO FROM PORTARIA \n"+
+            stmt = con.prepareStatement("SELECT NOMEDOCUMENTO, TEXTODOCUMENTO FROM DECRETOS \n"+
                     "WHERE NOMEDOCUMENTO = ?");
            
             stmt.setString(1, documento);
             rs = stmt.executeQuery();
             
                              while (rs.next()){
-                              selecionadocumentos = rs.getString("NOMEDOCUMENTO");
+                              ArquivoDocumentos arqdoc = new ArquivoDocumentos();
+                              arqdoc.setNomeDocumento(rs.getString("NOMEDOCUMENTO"));
+                              arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
+                              selecionadocumentos.add(arqdoc);
+                             }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null,"Erro no processo de busca! " + ex,
+                    "TechScan", JOptionPane.ERROR_MESSAGE);
+        }finally {
+            ConexaoFirebird.closeConnection(con, stmt, rs);
+            
+        }                                                    
+        return selecionadocumentos;
+    }
+    
+    public List<ArquivoDocumentos> selecionarportaria(String documento){
+         Connection con = ConexaoFirebird.getConnection();
+         PreparedStatement stmt = null;
+         ResultSet rs = null;
+          List<ArquivoDocumentos> selecionadocumentos = new ArrayList<>();
+         
+        try {
+            stmt = con.prepareStatement("SELECT NOMEDOCUMENTO, TEXTODOCUMENTO FROM PORTARIA \n"+
+                    "WHERE NOMEDOCUMENTO = ?");
+           
+            stmt.setString(1, documento);
+            rs = stmt.executeQuery();
+            
+                             while (rs.next()){
+                              ArquivoDocumentos arqdoc = new ArquivoDocumentos();
+                              arqdoc.setNomeDocumento(rs.getString("NOMEDOCUMENTO"));
+                              arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
+                              selecionadocumentos.add(arqdoc);
+                             }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null,"Erro no processo de busca! " + ex,
+                    "TechScan", JOptionPane.ERROR_MESSAGE);
+        }finally {
+            ConexaoFirebird.closeConnection(con, stmt, rs);
+            
+        }                                                    
+        return selecionadocumentos;
+    }
+    
+    public List<ArquivoDocumentos> selecionarportariatexto(String documento){
+         Connection con = ConexaoFirebirdTexto.getConnection();
+         PreparedStatement stmt = null;
+         ResultSet rs = null;
+          List<ArquivoDocumentos> selecionadocumentos = new ArrayList<>();
+         
+        try {
+            stmt = con.prepareStatement("SELECT NOMEDOCUMENTO, TEXTODOCUMENTO FROM PORTARIA \n"+
+                    "WHERE NOMEDOCUMENTO = ?");
+           
+            stmt.setString(1, documento);
+            rs = stmt.executeQuery();
+            
+                             while (rs.next()){
+                              ArquivoDocumentos arqdoc = new ArquivoDocumentos();
+                              arqdoc.setNomeDocumento(rs.getString("NOMEDOCUMENTO"));
+                              arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
+                              selecionadocumentos.add(arqdoc);
                              }
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(null,"Erro no processo de busca! " + ex,
@@ -302,7 +428,7 @@ public class DocumentosTextosDAO {
             arqdoc.setId(rs.getInt("ID"));
             arqdoc.setNomeDocumento(rs.getString("NOMEDOCUMENTO"));
             arqdoc.setPdf(rs.getString("PDF"));
-            //arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
+            arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
             //arqdoc.setFiguraDocumento(rs.getBytes("FIGURADOCUMENTO"));
             //arqdoc.setData(rs.getDate("DATA"));
             selecionadocumentos.add(arqdoc);
@@ -331,7 +457,7 @@ public class DocumentosTextosDAO {
             arqdoc.setId(rs.getInt("ID"));
             arqdoc.setNomeDocumento(rs.getString("NOMEDOCUMENTO"));
             arqdoc.setPdf(rs.getString("PDF"));
-            //arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
+            arqdoc.setTextoDocumento(rs.getString("TEXTODOCUMENTO"));
             //arqdoc.setFiguraDocumento(rs.getBytes("FIGURADOCUMENTO"));
             //arqdoc.setData(rs.getDate("DATA"));
             selecionadocumentos.add(arqdoc);
@@ -360,7 +486,8 @@ public class DocumentosTextosDAO {
                 File arquivotemp = new File("C:\\Myprogrm\\tessdatadb\\arq_banco.pdf");
                 output = new FileOutputStream(arquivotemp);
             } catch (FileNotFoundException ex) {
-                Logger.getLogger(DocumentosTextosDAO.class.getName()).log(Level.SEVERE, null, ex);
+                //Logger.getLogger(DocumentosTextosDAO.class.getName()).log(Level.SEVERE, null, ex);
+                //JOptionPane.showMessageDialog(null, "Não gerou o arquivo!");
             }
              while(rs.next()){
             IdArquivoDocumento arqdoc = new IdArquivoDocumento();
@@ -377,7 +504,8 @@ public class DocumentosTextosDAO {
                        output.write(buffer);
                     }
                 } catch (IOException ex) {
-                    Logger.getLogger(DocumentosTextosDAO.class.getName()).log(Level.SEVERE, null, ex);
+                    //Logger.getLogger(DocumentosTextosDAO.class.getName()).log(Level.SEVERE, null, ex);
+                    //JOptionPane.showMessageDialog(null, "Não gerou o arquivo!");
                 }
             }else{
             arqdoc.setFiguraDocumento(rs.getBytes("FIGURADOCUMENTO"));
@@ -389,7 +517,7 @@ public class DocumentosTextosDAO {
 
             }
         } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null,"Erro no processo de busca! " + ex,
+            JOptionPane.showMessageDialog(null,"Erro no processo de busca! aqui" + ex,
                     "TechScan", JOptionPane.ERROR_MESSAGE);
         }finally{
             ConexaoFirebird.closeConnection(con, stmt, rs);
@@ -514,6 +642,34 @@ public class DocumentosTextosDAO {
                     "WHERE SENHA = ?");
            
             stmt.setString(1, senhausuario);
+            rs = stmt.executeQuery();
+            Usuario usuario = new Usuario();
+                             while (rs.next()){
+                              usuario.setId(rs.getInt("ID"));
+                              usuario.setUsuario(rs.getString("USUARIO")); 
+                              usuario.setAdmin(rs.getString("ADIMIN"));
+                              selecionausuario.add(usuario);
+                             }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null,"Erro no processo de busca! " + ex,
+                    "TechScan", JOptionPane.ERROR_MESSAGE);
+        }finally {
+            ConexaoFirebird.closeConnection(con, stmt, rs);
+            
+        }                                                    
+        return selecionausuario;
+    }
+    
+    public List<Usuario> selecionaradmin(){
+         Connection con = ConexaoFirebird.getConnection();
+         PreparedStatement stmt = null;
+         ResultSet rs = null;
+         List<Usuario> selecionausuario = new ArrayList<>();
+        try {
+            stmt = con.prepareStatement("SELECT ID, USUARIO, ADIMIN FROM USUARIOS \n"+
+                    "WHERE ADIMIN = 'sim'");
+           
+            //stmt.setString(1, senhausuario);
             rs = stmt.executeQuery();
             Usuario usuario = new Usuario();
                              while (rs.next()){

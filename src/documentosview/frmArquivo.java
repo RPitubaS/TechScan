@@ -7,7 +7,10 @@ package documentosview;
   
     
 
+import static documentosview.frmLogin.txtLognick;
 import static documentosview.frmPai.btnAbrirarquivos;
+import static documentosview.frmPai.btnEntrarlogin;
+import static documentosview.frmPai.btnLogin;
 import static documentosview.frmPai.btnNovodocumento;
 import static documentosview.frmPai.dtpPai;
 import java.awt.Color;
@@ -33,9 +36,11 @@ import javax.swing.text.Highlighter;
 import javax.swing.text.JTextComponent;
 import modelo.bean.ArquivoDocumentos;
 import modelo.bean.IdArquivoDocumento;
+import modelo.bean.Usuario;
 import modelo.dao.DocumentosTextosDAO;
 import modelo.dao.UrlDao;
 import produzirconeccao.ConexaoFirebird;
+import produzirconeccao.ConexaoFirebirdTexto;
 import produzirconeccao.RefazerConexao;
 import util.AtualizarCTL;
 import util.AtualizarDocumentos;
@@ -43,18 +48,25 @@ import util.GerenteDeArquivos;
 import util.GuardarUrl;
 import util.ImprimirNasImpressoras;
 import util.SalvarDocumentos;
+import util.SalvarTextoParaArquivo;
 
 public class frmArquivo extends javax.swing.JInternalFrame {
     byte[] bytesimag;
+    List<ArquivoDocumentos> selecionararquivosum = new ArrayList<>();
     List<ArquivoDocumentos> selecionararquivos = new ArrayList<>();
     List<IdArquivoDocumento> selecionatextofigura = new ArrayList<>();
     GerenteDeArquivos gerentedearquivos = new GerenteDeArquivos();
+    File file = new File("C:\\Myprogrm\\tessdatadb\\arq_banco.pdf");
     frmCarregando frmcarregando;
     String iniciostring, tipododocumento = "", pdf;
     boolean tamanho = true;
     private static frmArquivo frmarquivo;
     FileInputStream input;
     File arquivo;
+    int idusuario = 0;
+    String nomeusuario = "";
+    //String tipousuario = "";
+    //String constante;
 
     public static frmArquivo getInstancia(){
           if(frmarquivo == null){
@@ -63,8 +75,10 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         return frmarquivo;
     }
     
+    
+    
     public frmArquivo() {
-                      
+                   
        // try {
         //    UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
        // } catch (ClassNotFoundException ex) {
@@ -82,8 +96,180 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         txtQuantidadedocumentos.setText("0 Documentos");
         txtTotalpalavras.setText("0 Palavras");
         jProgressBar2.setVisible(false);
+        variavelglobal();
     }
-
+    
+    public void salvartexto() throws ParseException{
+  String umnome = "", umtexto = "";
+  
+  if(frmarquivo.isSelected()){
+    if(frmarquivo != null){
+         String tipododocumento; //= frmscanner.cmbTipodocumento.getSelectedItem().toString();
+         if (rdbDocumentos1.isSelected()){
+             tipododocumento = "Decretos";
+         }else{
+             tipododocumento = "Portarias";
+         }
+         //GuardarUrl guardarurl = new GuardarUrl();
+         if(!txtBusca.getText().trim().equals("") && !txtTexto.getText().trim().equals("")){
+             try {
+                 //String resultado = guardarurl.GetProp("conectar");
+                 //String ip = guardarurl.GetProp("IP");
+                 //RefazerConexao rfc = new RefazerConexao();
+                 //rfc.refazerconexao();
+                 ConexaoFirebirdTexto conect = new ConexaoFirebirdTexto();
+             } catch (ClassNotFoundException ex) {
+                 Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
+             } catch (SQLException ex) {
+                 Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
+             }
+             
+                      DocumentosTextosDAO dtdao = new DocumentosTextosDAO();
+                      SalvarTextoParaArquivo stpa = new SalvarTextoParaArquivo();
+                      
+       switch (tipododocumento){
+        
+            case "Decretos":           
+                        selecionararquivosum = dtdao.selecionardecretotexto(txtBusca.getText());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(umnome.equals("")){
+                           int resultconfirm = JOptionPane.showConfirmDialog(null, "Salvar "+ txtBusca.getText() + " no arquivo de decretos?",
+                           "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                             if(resultconfirm == 0){
+                                 new Thread(){
+                                     @Override
+                                     public void run(){
+                                  frmcarregando = new frmCarregando();
+                                  dtpPai.add(frmcarregando);
+                                  frmcarregando.setVisible(true);
+                                  frmcarregando.setPosicao();  
+                                  //frmscanner.hide();
+                                 ArquivoDocumentos aqdc = new ArquivoDocumentos();
+                                 aqdc.setNomeDocumento((txtBusca.getText()).trim());
+                                         //if(arquivo.getName().endsWith("pdf")){
+                                         //aqdc.setPdf("Sim");
+                                         //try {
+                                         //input = new FileInputStream(arquivo);
+                                         //aqdc.setArquivo(input);
+                                         //} catch (FileNotFoundException ex) {
+                                         //JOptionPane.showMessageDialog(null, "Não foi possível ler o arquivo PDF! " + ex);
+                                         //}
+                                         //bytesimag = null;
+                                         //}else{
+                                    String contendootexto = txtTexto.getText();
+                                    byte[] textoparaarquivo = contendootexto.getBytes();
+                                    aqdc.setFiguraDocumento(textoparaarquivo);
+                                    //input = null;
+                                 //}
+                                 //aqdc.setTextoDocumento(" " + (frmscanner.txtDocumentoemtexto.getText()).trim());
+                                 SalvarDocumentos salvdoc = new SalvarDocumentos();
+                                 salvdoc.salvatextodecreto(aqdc);
+                                 frmcarregando.dispose();
+                                 //btnSalvar.setEnabled(false);
+                                 //btnHabilitartexto.setEnabled(false);
+                                 //btnAbrirarquivo.setEnabled(false);
+                                 //frmscanner.show();
+                                   try {
+                                       frmcarregando.setClosed(true);
+                                   } catch (PropertyVetoException ex) {
+                                       Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
+                                   }
+                                  dtpPai.remove(frmcarregando);  
+                                  //veiodopai();
+                                     }
+                                  }.start();
+                              }
+                        }else{
+                              JOptionPane.showMessageDialog(null,"Este nome de arquivo já esta sendo utilizado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                             }
+                        break;
+            case "Portarias":
+                        selecionararquivosum = dtdao.selecionarportariatexto(txtBusca.getText());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(umnome.equals("")){
+                           int resultconfirm = JOptionPane.showConfirmDialog(null, "Salvar "+ txtBusca.getText() + " no arquivo de portarias?",
+                           "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                             if(resultconfirm == 0){
+                                new Thread(){
+                                     @Override
+                                     public void run(){
+                                  frmcarregando = new frmCarregando();
+                                  dtpPai.add(frmcarregando);
+                                  frmcarregando.setVisible(true);
+                                  frmcarregando.setPosicao();  
+                                  //frmscanner.hide();
+                                 ArquivoDocumentos aqdc = new ArquivoDocumentos();
+                                 aqdc.setNomeDocumento((txtBusca.getText()).trim());
+                                 //if(arquivo.getName().endsWith("pdf")){
+                                    //aqdc.setPdf("Sim");
+                                    //try {
+                                          //input = new FileInputStream(arquivo);
+                                         // aqdc.setArquivo(input);
+                                      //} catch (FileNotFoundException ex) {
+                                          //JOptionPane.showMessageDialog(null, "Não foi possível ler o arquivo PDF! " + ex);
+                                     //}
+                                    //bytesimag = null;
+                                 //}else{
+                                    String contendootexto = txtTexto.getText();
+                                    byte[] textoparaarquivo = contendootexto.getBytes();
+                                    aqdc.setFiguraDocumento(textoparaarquivo);
+                                    //input = null;
+                                 //}
+                                 //aqdc.setTextoDocumento(" " + (frmscanner.txtDocumentoemtexto.getText()).trim());
+                                 SalvarDocumentos salvdoc = new SalvarDocumentos();
+                                 salvdoc.salvatextoportaria(aqdc);
+                                 frmcarregando.dispose();
+                                 //btnSalvar.setEnabled(false);
+                                 //btnHabilitartexto.setEnabled(false);
+                                 //btnAbrirarquivo.setEnabled(false);
+                                 //frmscanner.show();
+                                   try {
+                                       frmcarregando.setClosed(true);
+                                   } catch (PropertyVetoException ex) {
+                                       Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
+                                   }
+                                  dtpPai.remove(frmcarregando);  
+                                  //veiodopai();
+                                     }
+                                  }.start();
+                              }
+                        }else{
+                              JOptionPane.showMessageDialog(null,"Este nome de arquivo já esta sendo utilizado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                             }
+                break;    
+               
+        }        
+                   }else{
+                         JOptionPane.showMessageDialog(null, "É preciso um nome e um arquivo para ser arquivado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                        }
+         
+         }
+    }
+         }
+    
+    public void variavelglobal(){
+    
+        SingletonModel.ABC obj = SingletonModel.ABC.INSTANCE;
+        String constante = obj.i;
+        if("nao".equals(constante)){
+           btnSalvardocumento.setEnabled(false);
+           btnExcluirdocumento.setEnabled(false);
+           btnRenomear.setEnabled(false);
+        }else{
+           if("sim".equals(constante)){
+              btnSalvardocumento.setEnabled(true);
+              btnExcluirdocumento.setEnabled(true);
+              btnRenomear.setEnabled(true);
+           }
+        }      
+    }
+    
     class PintorDeTexto extends DefaultHighlighter.DefaultHighlightPainter{
           
          public PintorDeTexto(Color color){
@@ -129,16 +315,22 @@ public class frmArquivo extends javax.swing.JInternalFrame {
          
           public void salvar() throws ParseException{
               
-
+                String umnome = "", umtexto = "";
                   GuardarUrl guardarurl = new GuardarUrl();
                         if(!txtBusca.getText().equals("") && !txtTexto.getText().equals("")){
                            String resultado = guardarurl.GetProp("conectar");
-                           gerentedeconexao(resultado);
+                           String ip = guardarurl.GetProp("IP");
+                           gerentedeconexao(resultado, ip);
                            DocumentosTextosDAO dtdao = new DocumentosTextosDAO();
                             switch (tipododocumento){
         
-                                    case "Portarias":           
-                        if(dtdao.selecionardecreto(txtBusca.getText()).equals("")){
+                                    case "Portarias":    
+                        selecionararquivosum = dtdao.selecionardecreto(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(umnome.equals("")){
                            int resultconfirm = JOptionPane.showConfirmDialog(null, "Salvar " + txtBusca.getText().trim() + " no arquivo de decretos?",
                            "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                              if(resultconfirm == 0){
@@ -169,7 +361,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                                  }
                                  aqdc.setTextoDocumento(" " + (txtTexto.getText()).trim());
                                  SalvarDocumentos salvdoc = new SalvarDocumentos();
-                                 salvdoc.salvadecreto(aqdc, resultado);
+                                 salvdoc.salvadecreto(aqdc, resultado, ip);
                                  frmcarregando.dispose();
                                  frmarquivo.show();
                                  excluirmudar();
@@ -180,16 +372,26 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                                    }
                                   dtpPai.remove(frmcarregando);  
                                    JOptionPane.showMessageDialog(null, "O documento foi incluído no arquivo de decretos!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                                   DefaultTableModel modelo = (DefaultTableModel) tblModelos.getModel();
+                                   modelo.setNumRows(0);
                                      }
                                   }.start();
                                 //}
                               }
                         }else{
-                              JOptionPane.showMessageDialog(null,"Este nome de arquivo já esta sendo utilizado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                              JOptionPane.showMessageDialog(null,"O nome: " + 
+                               selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento() 
+                               + " já esta sendo utilizado, se deseja troca-lo clique em renomear!111","TechScan",
+                               JOptionPane.INFORMATION_MESSAGE);
                              }
                         break;
             case "Decretos":
-                        if(dtdao.selecionarportaria(txtBusca.getText()).equals("")){
+                selecionararquivosum = dtdao.selecionarportaria(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(umnome.equals("")){
                            int resultconfirm = JOptionPane.showConfirmDialog(null, "Salvar " + txtBusca.getText().trim() + " no arquivo de portarias?",
                            "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                              if(resultconfirm == 0){
@@ -219,7 +421,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                                  }
                                  aqdc.setTextoDocumento(" " + (txtTexto.getText()).trim());
                                  SalvarDocumentos salvdoc = new SalvarDocumentos();
-                                 salvdoc.salvaportaria(aqdc, resultado);
+                                 salvdoc.salvaportaria(aqdc, resultado, ip);
                                  frmcarregando.dispose();
                                  frmarquivo.show();
                                  excluirmudar();
@@ -230,11 +432,16 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                                    }
                                   dtpPai.remove(frmcarregando);  
                                   JOptionPane.showMessageDialog(null, "O documento foi incluído no arquivo de portarias!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                                  DefaultTableModel modelo = (DefaultTableModel) tblModelos.getModel();
+                                  modelo.setNumRows(0);
                                      }
                                   }.start();
                               }
                         }else{
-                              JOptionPane.showMessageDialog(null,"Este nome de arquivo já esta sendo utilizado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                              JOptionPane.showMessageDialog(null,"O nome: " + 
+                               selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento() 
+                               + " já esta sendo utilizado, se deseja troca-lo clique em renomear!222","TechScan",
+                               JOptionPane.INFORMATION_MESSAGE);
                              }
                 break;    
                
@@ -245,19 +452,19 @@ public class frmArquivo extends javax.swing.JInternalFrame {
          
          }
     //}
-             public void gerentedeconexao(String resultado){
+             public void gerentedeconexao(String resultado, String ip){
              
                try {
              
                     if(resultado != null){
-                       ConexaoFirebird conect = new ConexaoFirebird(resultado);
+                       ConexaoFirebird conect = new ConexaoFirebird(resultado, ip);
                     }else{
                        UrlDao url = new UrlDao();
-                       url.pegaurl();
+                       url.pegaurl(ip);
                     }
                } catch (ClassNotFoundException ex) {
                         UrlDao url = new UrlDao();
-                        url.pegaurl();
+                        url.pegaurl(ip);
              
                } catch (SQLException ex) {
 
@@ -272,8 +479,9 @@ public class frmArquivo extends javax.swing.JInternalFrame {
             if(conectado.isClosed()){
                 GuardarUrl guardarurl = new GuardarUrl();
                 String resultado = guardarurl.GetProp("conectar");
+                String ip = guardarurl.GetProp("IP");
                 if(resultado != null){
-                    ConexaoFirebird conect = new ConexaoFirebird(resultado);
+                    ConexaoFirebird conect = new ConexaoFirebird(resultado, ip);
                 }
             }
         } catch (SQLException ex) {
@@ -297,6 +505,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
              
         public void atualizar(){
         //if(!txtBusca.getText().equals("")){
+        String umnome = "", umtexto = "";
             if(rdbDocumentos1.isSelected()){
                   tipododocumento = "Decretos";
                }else{
@@ -305,14 +514,24 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                      }     
                }
                   GuardarUrl guardarurl = new GuardarUrl();
-                        if(!txtBusca.getText().equals("") && !txtTexto.getText().equals("")){
+                    if(!txtBusca.getText().equals("") && !txtTexto.getText().equals("")){
                            String resultado = guardarurl.GetProp("conectar");
-                           gerentedeconexao(resultado);
+                           String ip = guardarurl.GetProp("IP");
+                           gerentedeconexao(resultado, ip);
                            DocumentosTextosDAO dtdao = new DocumentosTextosDAO();
+                           
                             switch (tipododocumento){
-        
+                       
                                     case "Decretos":           
-                        
+                        selecionararquivosum = dtdao.selecionardecreto(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(txtBusca.getText().equals(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento()) && 
+                           !umtexto.equals(txtTexto.getText()) && !txtTexto.getText().equals("")||
+                           !txtBusca.getText().equals(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento()) && 
+                           !selecionararquivosum.equals("") && !txtBusca.getText().equals("")){
                            int resultconfirm = JOptionPane.showConfirmDialog(null, "Atualizar " + txtBusca.getText().trim() + " no arquivo de decretos?",
                            "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                              if(resultconfirm == 0){
@@ -330,7 +549,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                                  aqdc.setNomeDocumento((txtBusca.getText()).trim());
                                  aqdc.setTextoDocumento(" " + (txtTexto.getText()).trim());
                                  AtualizarDocumentos atualdoc = new AtualizarDocumentos();
-                                 atualdoc.atualizadecreto(aqdc, resultado);
+                                 atualdoc.atualizadecreto(aqdc, resultado, ip);
                                  frmcarregando.dispose();
                                  frmarquivo.show();
                                  limparjanela();
@@ -341,13 +560,32 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                                    }
                                   dtpPai.remove(frmcarregando);  
                                    JOptionPane.showMessageDialog(null, "O documento foi atualizado no arquivo de decretos!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                                   DefaultTableModel modelo = (DefaultTableModel) tblModelos.getModel();
+                                   modelo.setNumRows(0);
                                      }    
                                   }.start();
                                 //}                              
-                              }
+                              }else{
+                                   txtBusca.setText(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento());
+                                   txtTexto.setText(selecionararquivos.get(tblModelos.getSelectedRow()).getTextoDocumento());
+                             }
+                        }else{
+                              JOptionPane.showMessageDialog(null,"O nome: " + 
+                               selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento() 
+                               + " já esta sendo utilizado, se deseja troca-lo clique em renomear!","TechScan",
+                               JOptionPane.INFORMATION_MESSAGE);
+                        }
                         break;
             case "Portarias":
-
+                        selecionararquivosum = dtdao.selecionarportaria(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(txtBusca.getText().equals(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento()) && 
+                           !umtexto.equals(txtTexto.getText()) && !txtTexto.getText().equals("")||
+                           !txtBusca.getText().equals(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento()) && 
+                           !selecionararquivosum.equals("") && !txtBusca.getText().equals("")){
                            int resultconfirm1 = JOptionPane.showConfirmDialog(null, "Atualizar " + txtBusca.getText().trim() + " no arquivo de portarias?",
                            "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                              if(resultconfirm1 == 0){
@@ -364,7 +602,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                                  aqdc.setNomeDocumento((txtBusca.getText()).trim());
                                  aqdc.setTextoDocumento(" " + (txtTexto.getText()).trim());
                                  AtualizarDocumentos atualdoc = new AtualizarDocumentos();
-                                 atualdoc.atualizaportaria(aqdc, resultado);
+                                 atualdoc.atualizaportaria(aqdc, resultado, ip);
                                  frmcarregando.dispose();
                                  frmarquivo.show();
                                  limparjanela();
@@ -375,15 +613,26 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                                    }
                                   dtpPai.remove(frmcarregando);  
                                   JOptionPane.showMessageDialog(null, "O documento foi incluído no arquivo de portarias!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                                  DefaultTableModel modelo = (DefaultTableModel) tblModelos.getModel();
+                                  modelo.setNumRows(0);
                                      }
                                   }.start();                                
-                              }
+                              }else{
+                                   txtBusca.setText(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento());
+                                   txtTexto.setText(selecionararquivos.get(tblModelos.getSelectedRow()).getTextoDocumento());
+                             }
+                        }else{
+                              JOptionPane.showMessageDialog(null,"O nome: " + 
+                               selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento() 
+                               + " já esta sendo utilizado, se deseja troca-lo clique em renomear!","TechScan",
+                               JOptionPane.INFORMATION_MESSAGE);
+                        }
                 break;    
                
         }
-                   }else{
-                         JOptionPane.showMessageDialog(null, "É preciso um nome e um arquivo para ser arquivado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
-                        }
+               }else{
+                     JOptionPane.showMessageDialog(null, "É preciso um nome e um arquivo para ser arquivado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                    }
         //}else{
               //JOptionPane.showMessageDialog(null, "É necessário definir o nome do arquivo na caixa de texto!");
              //}
@@ -454,13 +703,15 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                 rfc.refazerconexao();
                    pdf = selecionararquivos.get(tblModelos.getSelectedRow()).getPdf();
                    selecionatextofigura.clear();
-                   if(tipododocumento == "Decretos"){
+                   try{
+                   if("Decretos".equals(tipododocumento)){
                       selecionatextofigura = doctxt.selecionatextoimagedecreto(id);                      
                    }else{
-                         if(tipododocumento == "Portarias"){
+                         if("Portarias".equals(tipododocumento)){
                             selecionatextofigura = doctxt.selecionatextoimageportaria(id);                            
                          }     
                    }
+                   
                      for(IdArquivoDocumento arqdoc : selecionatextofigura){
                          txtTexto.setText(arqdoc.getTextoDocumento());
                       if(arqdoc.getFiguraDocumento() != null){
@@ -468,14 +719,18 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                          ImageIcon icon = new ImageIcon(bytesimag);
                          icon.setImage(icon.getImage().getScaledInstance(frmarquivo.lblFigura.getWidth(),frmarquivo.lblFigura.getHeight(), 1));
                          frmarquivo.lblFigura.setIcon(icon);
+                         btnImprimirimagem.setEnabled(true);
+                         btnImprimirtexto.setEnabled(false);        
                       }else{
-                         try {
-                               Desktop.getDesktop().open(new File("C:\\Myprogrm\\tessdatadb\\arq_banco.pdf"));
+                         try { 
+                               Desktop.getDesktop().open(file);
+                               btnImprimirimagem.setEnabled(false);
+                               btnImprimirtexto.setEnabled(true); 
                          } catch (IOException ex) {
                                JOptionPane.showMessageDialog(null, "Erro no tipo de arquivo" + ex);
                          }
                          
-                    ImageIcon icon = new ImageIcon("C:\\Myprogrm\\tessdatadb\\PDF.png");
+                    ImageIcon icon = new ImageIcon("C:\\Myprogrm\\tessdatadb\\pdf-icono-281x300.png");
                     icon.setImage(icon.getImage().getScaledInstance(frmarquivo.lblFigura.getWidth(),frmarquivo.lblFigura.getHeight(), 1));
                     frmarquivo.lblFigura.setIcon(icon); 
                       }
@@ -487,7 +742,11 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                lblFigura.setIcon(null);
                txtBusca.requestFocus();
              }
-            
+         }catch(Exception e){
+                              jProgressBar2.setVisible(false);
+                              JOptionPane.showMessageDialog(null, "Existe um arquivo em PDF ainda "
+                              + "aberto, por favor, feche o arquivo e tente novamente!", "TechScan",JOptionPane.WARNING_MESSAGE);
+                            }
          }
          
         public void excluir(){
@@ -609,6 +868,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         btnBuscardocumentos = new javax.swing.JButton();
         btnBuscartextodocumentos = new javax.swing.JButton();
         txtTotalpalavras = new javax.swing.JTextField();
+        jButton1 = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         rdbDocumentos1 = new javax.swing.JRadioButton();
@@ -619,6 +879,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         btnLimpar = new javax.swing.JButton();
         btnImprimirimagem = new javax.swing.JButton();
         btnImprimirtexto = new javax.swing.JButton();
+        btnRenomear = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
         lblFigura = new javax.swing.JLabel();
@@ -721,6 +982,13 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         txtTotalpalavras.setHorizontalAlignment(javax.swing.JTextField.CENTER);
         txtTotalpalavras.setToolTipText("Quantidade de palavras dentro do documento");
 
+        jButton1.setText("jButton1");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -733,11 +1001,17 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                         .addComponent(btnBuscartextodocumentos, javax.swing.GroupLayout.PREFERRED_SIZE, 203, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addComponent(btnBuscardocumentos, javax.swing.GroupLayout.PREFERRED_SIZE, 201, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnProcurarpalavra, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 11, Short.MAX_VALUE)
-                .addComponent(txtTotalpalavras, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(btnProcurarpalavra, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+                        .addComponent(txtTotalpalavras, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1)
+                        .addGap(50, 50, 50))))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -750,7 +1024,8 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(btnBuscartextodocumentos)
-                    .addComponent(btnBuscardocumentos))
+                    .addComponent(btnBuscardocumentos)
+                    .addComponent(jButton1))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -764,11 +1039,26 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         buttonGroup1.add(rdbDocumentos1);
         rdbDocumentos1.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
         rdbDocumentos1.setText("Decreto");
+        rdbDocumentos1.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                rdbDocumentos1MouseClicked(evt);
+            }
+        });
 
         rdbDocumentos2.setBackground(new java.awt.Color(255, 255, 153));
         buttonGroup1.add(rdbDocumentos2);
         rdbDocumentos2.setFont(new java.awt.Font("Tahoma", 1, 24)); // NOI18N
         rdbDocumentos2.setText("Portaria");
+        rdbDocumentos2.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                rdbDocumentos2MouseClicked(evt);
+            }
+        });
+        rdbDocumentos2.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                rdbDocumentos2ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
         jPanel4.setLayout(jPanel4Layout);
@@ -825,6 +1115,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         btnImprimirimagem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/documentosicons/printer.png"))); // NOI18N
         btnImprimirimagem.setText("Imprimir Figura");
         btnImprimirimagem.setToolTipText("Imprimir somente a imagem");
+        btnImprimirimagem.setEnabled(false);
         btnImprimirimagem.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnImprimirimagemActionPerformed(evt);
@@ -834,9 +1125,18 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         btnImprimirtexto.setIcon(new javax.swing.ImageIcon(getClass().getResource("/documentosicons/printer.png"))); // NOI18N
         btnImprimirtexto.setText("Imprimir texto");
         btnImprimirtexto.setToolTipText("Imprimir somente o texto");
+        btnImprimirtexto.setEnabled(false);
         btnImprimirtexto.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnImprimirtextoActionPerformed(evt);
+            }
+        });
+
+        btnRenomear.setIcon(new javax.swing.ImageIcon(getClass().getResource("/documentosicons/Selecionar.png"))); // NOI18N
+        btnRenomear.setText("Renomear");
+        btnRenomear.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRenomearActionPerformed(evt);
             }
         });
 
@@ -848,26 +1148,29 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                 .addContainerGap()
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(btnSalvardocumento, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnExcluirdocumento, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(btnLimpar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnImprimirimagem, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(btnImprimirtexto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(btnImprimirimagem, javax.swing.GroupLayout.DEFAULT_SIZE, 310, Short.MAX_VALUE)
+                    .addComponent(btnImprimirtexto, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnExcluirdocumento, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnRenomear, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel7Layout.createSequentialGroup()
-                .addContainerGap(15, Short.MAX_VALUE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(btnSalvardocumento, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnExcluirdocumento, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnRenomear, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnLimpar, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnImprimirimagem, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(btnImprimirtexto, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(15, 15, 15))
+                .addGap(10, 10, 10))
         );
 
         jLabel2.setFont(new java.awt.Font("Arial", 1, 24)); // NOI18N
@@ -918,7 +1221,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(102, 102, 102)
                 .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 146, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(111, Short.MAX_VALUE))
+                .addContainerGap(108, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -929,12 +1232,12 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(1, 1, 1)
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 430, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 418, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jProgressBar2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         jScrollPane4.setBackground(new java.awt.Color(255, 255, 255));
@@ -993,30 +1296,28 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addGap(3, 3, 3))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jScrollPane4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                    .addComponent(jScrollPane4))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGap(5, 5, 5))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 783, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(14, 14, 14))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 783, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(14, 14, 14))
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel1Layout.createSequentialGroup()
+                        .addContainerGap()
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 746, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())))
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 746, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -1048,10 +1349,13 @@ public class frmArquivo extends javax.swing.JInternalFrame {
            }
       txtQuantidadedocumentos.setText(tblModelos.getRowCount() +" Documentos");
     }
+    txtBusca.setText("");
+    txtTexto.setText("");
+    lblFigura.setIcon(null);
     }//GEN-LAST:event_btnBuscardocumentosActionPerformed
 
     private void tblModelosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tblModelosMouseClicked
-        txtBusca.setText("");
+        txtBusca.setText(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento());
         txtBusca.requestFocus();
         Thread thread = new Thread(){
                @Override
@@ -1172,6 +1476,14 @@ public class frmArquivo extends javax.swing.JInternalFrame {
                tblModelos.removeAll();
                txtQuantidadedocumentos.setText("0 Documentos");
                txtTotalpalavras.setText("0 Palavras");
+               btnLogin.setEnabled(true);
+               btnEntrarlogin.setEnabled(true);
+               jProgressBar2.setVisible(false);
+               btnImprimirimagem.setEnabled(false);
+               btnImprimirtexto.setEnabled(false);   
+               DefaultTableModel modelo = (DefaultTableModel) tblModelos.getModel();
+               modelo.setNumRows(0);
+               
     }//GEN-LAST:event_formInternalFrameClosing
 
     private void txtBuscaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtBuscaKeyPressed
@@ -1180,17 +1492,77 @@ public class frmArquivo extends javax.swing.JInternalFrame {
         }
     }//GEN-LAST:event_txtBuscaKeyPressed
 
+    private void btnRenomearActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRenomearActionPerformed
+       if(!txtBusca.getText().equals(selecionararquivos.get(tblModelos.getSelectedRow()).getNomeDocumento())&&
+               !txtBusca.getText().equals("")){
+         switch (tipododocumento){
+        
+               case "Decretos": 
+                   if(rdbDocumentos2.isSelected()){
+               try {  
+                    salvar();
+               } catch (ParseException ex) {
+                    Logger.getLogger(frmArquivo.class.getName()).log(Level.SEVERE, null, ex);
+               }
+                   }else{
+                     atualizar();
+                   }                   
+               break;
+               case "Portarias":
+                   if(rdbDocumentos1.isSelected()){
+            try {  
+                salvar();
+            } catch (ParseException ex) {
+                Logger.getLogger(frmArquivo.class.getName()).log(Level.SEVERE, null, ex);
+            }
+                   }else{
+                     atualizar();
+                   }
+               break;
+        }
+      }else{
+            JOptionPane.showMessageDialog(null, "É preciso um novo nome de arquivo para ser arquivado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+       }
+    }//GEN-LAST:event_btnRenomearActionPerformed
+
+    private void rdbDocumentos2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rdbDocumentos2MouseClicked
+        //tipododocumento = "Portarias";
+    }//GEN-LAST:event_rdbDocumentos2MouseClicked
+
+    private void rdbDocumentos1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_rdbDocumentos1MouseClicked
+        //tipododocumento = "Decrestos";
+    }//GEN-LAST:event_rdbDocumentos1MouseClicked
+
+    private void rdbDocumentos2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rdbDocumentos2ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_rdbDocumentos2ActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        if (frmarquivo != null) {
+            try {
+                frmarquivo.salvartexto();
+                //btnAbrirarquivo.setEnabled(false);
+                //btnHabilitartexto.setEnabled(false);
+                //btnSalvar.setEnabled(false);
+                //JOptionPane.showMessageDialog(null, "Nenhum arquivo a ser armazenado!");
+            } catch (Exception e) {
+            }
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnBuscardocumentos;
     private javax.swing.JButton btnBuscartextodocumentos;
-    private javax.swing.JButton btnExcluirdocumento;
+    public static javax.swing.JButton btnExcluirdocumento;
     private javax.swing.JButton btnImprimirimagem;
     private javax.swing.JButton btnImprimirtexto;
     private javax.swing.JButton btnLimpar;
     private javax.swing.JButton btnProcurarpalavra;
-    private javax.swing.JButton btnSalvardocumento;
+    public static javax.swing.JButton btnRenomear;
+    public static javax.swing.JButton btnSalvardocumento;
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
@@ -1199,7 +1571,7 @@ public class frmArquivo extends javax.swing.JInternalFrame {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
-    private javax.swing.JProgressBar jProgressBar2;
+    public static javax.swing.JProgressBar jProgressBar2;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;

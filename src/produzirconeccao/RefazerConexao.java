@@ -25,8 +25,9 @@ public class RefazerConexao {
             if(conectado.isClosed()){
                 GuardarUrl guardarurl = new GuardarUrl();
                 String resultado = guardarurl.GetProp("conectar");
+                String ip = guardarurl.GetProp("IP");
                 if(resultado != null){
-                    ConexaoFirebird conect = new ConexaoFirebird(resultado);
+                    ConexaoFirebird conect = new ConexaoFirebird(resultado, ip);
                 }
             }
         } catch (SQLException ex) {

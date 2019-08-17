@@ -16,13 +16,13 @@ import javax.swing.JOptionPane;
  *
  * @author Pituba
  */
-public class ConexaoFirebird {
+public class ConexaoFirebirdTexto {
     private static Connection conexao;
            
-           public ConexaoFirebird(String conectar, String ip) throws ClassNotFoundException, SQLException {
+           public ConexaoFirebirdTexto() throws ClassNotFoundException, SQLException {
                
            Class.forName("org.firebirdsql.jdbc.FBDriver");
-           String url = "jdbc:firebirdsql:" + ip + "/3050:" + conectar;
+           String url = "jdbc:firebirdsql:localhost/3050:C:/Myprogrm/tessdatadb/ARQUIVODOCUMENTOS2.FDB?encoding\\=WIN1252";
 
         conexao = DriverManager.getConnection(url, "SYSDBA", "masterkey");
     }

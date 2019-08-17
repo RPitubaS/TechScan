@@ -1,28 +1,54 @@
 package documentosview;
 
+import static documentosview.frmArquivo.btnExcluirdocumento;
+import static documentosview.frmArquivo.btnRenomear;
+import static documentosview.frmArquivo.btnSalvardocumento;
+import static documentosview.frmArquivo.jProgressBar2;
+import static documentosview.frmLogin.btnCadastro;
+import static documentosview.frmLogin.btnEntrar;
+import static documentosview.frmLogin.cbxAdministrador;
+import static documentosview.frmLogin.txtConfsenha;
+import static documentosview.frmLogin.txtLognick;
+import static documentosview.frmLogin.txtLogsenha;
+import static documentosview.frmLogin.txtNome;
+import static documentosview.frmLogin.txtSenha;
 import static documentosview.frmPai.btnAbrirarquivo;
 import java.beans.PropertyVetoException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JDesktopPane;
 import javax.swing.JOptionPane;
+import modelo.bean.Usuario;
+import modelo.dao.DocumentosTextosDAO;
 import util.GuardarUrl;
 import modelo.dao.UrlDao;
 import modelo.dao.UrlScannerDAO;
 import produzirconeccao.ConexaoFirebird;
+import produzirconeccao.RefazerConexao;
 import util.GerenteDeJanelas;
 import util.GuardarUrlScanner;
+import static documentosview.frmEntrar.txtLognickentrar;
+import java.awt.event.ComponentListener;
+import javax.swing.ImageIcon;
+import java.awt.Image;
+import java.awt.Graphics;
+
 
 public class frmPai extends javax.swing.JFrame {
 
     GerenteDeJanelas gerentedejanelas;
     GuardarUrl guardarurl = new GuardarUrl();
-
+    Usuario usuario;
     frmScanner frmscanner = new frmScanner();
     frmArquivo frmarquivo = new frmArquivo();
     frmLogin frmlogin = new frmLogin();
+    frmEntrar frmentrar = new frmEntrar();
+    private static JDesktopPane jdesktoppane;
     public frmPai() {
         initComponents();
         this.gerentedejanelas = new GerenteDeJanelas(dtpPai);
@@ -34,31 +60,100 @@ public class frmPai extends javax.swing.JFrame {
         btnHabilitartexto.setEnabled(false);
         btnSalvar.setEnabled(false);
         btnAbrirarquivos.setEnabled(false);
+        btnLogin.setEnabled(false);
         botaoscanner();
-        abrirlogin();
         
-        String resultado = guardarurl.GetProp("conectar");       
+        String resultado = guardarurl.GetProp("conectar");  
+        String ip = guardarurl.GetProp("IP");
         try {
             if (!resultado.equals("")) {
-                ConexaoFirebird conect = new ConexaoFirebird(resultado);
+                ConexaoFirebird conect = new ConexaoFirebird(resultado, ip);
             } else {
+                String servidor = JOptionPane.showInputDialog(null,"Digite aqui o IP do servidor, caso exista um!");
                 UrlDao url = new UrlDao();
-                url.pegaurl();
+                if(servidor != ""){
+                url.pegaurl(servidor);
+                }else{
+                url.pegaurl("localhost");
+                }
             }
         } catch (ClassNotFoundException ex) {
-            UrlDao url = new UrlDao();
-            url.pegaurl();
+            String servidor = JOptionPane.showInputDialog(null,"Digite aqui o IP do servidor, caso exista um!");
+                UrlDao url = new UrlDao();
+                if(servidor != ""){
+                url.pegaurl(servidor);
+                }else{
+                url.pegaurl("localhost");
+                }
 
         } catch (SQLException ex) {
             System.exit(0);
+        }  
+        
+        List<Usuario> selecionandousuario = new ArrayList<>();
+        DocumentosTextosDAO dctdao = new DocumentosTextosDAO();
+        selecionandousuario = dctdao.selecionaradmin();
+        RefazerConexao rfc = new RefazerConexao();
+        rfc.refazerconexao();
+        if(!selecionandousuario.isEmpty()){
+           abrirentrar();       
         }
+        if(selecionandousuario.isEmpty()){
+            abrirlogin();
+           cbxAdministrador.setSelected(false);
+           txtNome.setEnabled(true);
+           txtSenha.setEnabled(true);
+           txtConfsenha.setEnabled(true);
+           cbxAdministrador.setEnabled(true);
+           btnCadastro.setEnabled(true);
+           txtLognickentrar.setText("");
+           txtLogsenha.setText("");
+           frmlogin.setClosable(true);
+           btnNovodocumento.setEnabled(false);
+           btnAbrirarquivos.setEnabled(false);
+           btnHabilitartexto.setEnabled(false);
+           btnSalvar.setEnabled(false);
+           btnLogin.setEnabled(true);
+           btnEntrar.setEnabled(false);
+           btnEntrarlogin.setEnabled(false);
+        }
+        
+                   
     }
-
+    //public void brasao(){
+          //ImageIcon icon = new ImageIcon("C:\\Myprogrm\\tessdatadb\\brasao sjn.png");
+          //icon.setImage(icon.getImage().getScaledInstance(1300,915, 1));
+          //lblBrasao.setIcon(icon); 
+    //}
+    public void variavelglobal(){
+        SingletonModel.ABC obj = SingletonModel.ABC.INSTANCE;
+        String constante = obj.i;
+        if("nao".equals(constante)){
+           btnSalvardocumento.setEnabled(false);
+           btnExcluirdocumento.setEnabled(false);
+           btnRenomear.setEnabled(false);
+        }else{
+           if("sim".equals(constante)){
+              btnSalvardocumento.setEnabled(true);
+              btnExcluirdocumento.setEnabled(true);
+              btnRenomear.setEnabled(true);
+           }
+        }      
+    }
+    
     public void abrirlogin(){
         try {
-            gerentedejanelas.abrirlogin(frmLogin.getInstancia());
+             gerentedejanelas.abrirlogin(frmLogin.getInstancia());
         } catch (PropertyVetoException ex) {
-            Logger.getLogger(frmPai.class.getName()).log(Level.SEVERE, null, ex);
+             Logger.getLogger(frmPai.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+    
+     public void abrirentrar(){
+        try {
+             gerentedejanelas.abrirentrar(frmEntrar.getInstancia());
+        } catch (PropertyVetoException ex) {
+             Logger.getLogger(frmPai.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     public void botaoscanner() {
@@ -85,11 +180,14 @@ public class frmPai extends javax.swing.JFrame {
         btnAbrirarquivos = new javax.swing.JButton();
         jLabel2 = new javax.swing.JLabel();
         btnLogin = new javax.swing.JButton();
-        jLabel1 = new javax.swing.JLabel();
+        btnEntrarlogin = new javax.swing.JButton();
+        jSeparator3 = new javax.swing.JToolBar.Separator();
         btnScanner = new javax.swing.JButton();
         jButton2 = new javax.swing.JButton();
         jButton1 = new javax.swing.JButton();
+        lblUsuario = new javax.swing.JLabel();
         dtpPai = new javax.swing.JDesktopPane();
+        lblBrasao = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("TechScan - Sistema de Conversão de Documentos. V1.0");
@@ -189,7 +287,7 @@ public class frmPai extends javax.swing.JFrame {
 
         btnLogin.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         btnLogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/documentosicons/App-login-manager1-icon.png"))); // NOI18N
-        btnLogin.setText("Login");
+        btnLogin.setText("Cadastro");
         btnLogin.setFocusable(false);
         btnLogin.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
         btnLogin.setMaximumSize(new java.awt.Dimension(50, 55));
@@ -203,8 +301,22 @@ public class frmPai extends javax.swing.JFrame {
         });
         jToolBar1.add(btnLogin);
 
-        jLabel1.setText("                                                                                                                ");
-        jToolBar1.add(jLabel1);
+        btnEntrarlogin.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        btnEntrarlogin.setIcon(new javax.swing.ImageIcon(getClass().getResource("/documentosicons/App-login-manager1-icon.png"))); // NOI18N
+        btnEntrarlogin.setText("Login");
+        btnEntrarlogin.setFocusable(false);
+        btnEntrarlogin.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        btnEntrarlogin.setMaximumSize(new java.awt.Dimension(50, 55));
+        btnEntrarlogin.setMinimumSize(new java.awt.Dimension(50, 55));
+        btnEntrarlogin.setPreferredSize(new java.awt.Dimension(50, 55));
+        btnEntrarlogin.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+        btnEntrarlogin.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnEntrarloginActionPerformed(evt);
+            }
+        });
+        jToolBar1.add(btnEntrarlogin);
+        jToolBar1.add(jSeparator3);
 
         btnScanner.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
         btnScanner.setIcon(new javax.swing.ImageIcon(getClass().getResource("/documentosicons/if_scanner_18212.png"))); // NOI18N
@@ -237,9 +349,14 @@ public class frmPai extends javax.swing.JFrame {
         });
         jToolBar1.add(jButton2);
 
-        jButton1.setText("jButton1");
+        jButton1.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+        jButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/documentosicons/save_21411.png"))); // NOI18N
+        jButton1.setText("S. Texto");
         jButton1.setFocusable(false);
         jButton1.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+        jButton1.setMaximumSize(new java.awt.Dimension(50, 55));
+        jButton1.setMinimumSize(new java.awt.Dimension(50, 55));
+        jButton1.setPreferredSize(new java.awt.Dimension(50, 55));
         jButton1.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
         jButton1.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -248,15 +365,38 @@ public class frmPai extends javax.swing.JFrame {
         });
         jToolBar1.add(jButton1);
 
+        lblUsuario.setFont(new java.awt.Font("Tahoma", 1, 18)); // NOI18N
+        lblUsuario.setForeground(new java.awt.Color(255, 0, 0));
+        lblUsuario.setHorizontalAlignment(javax.swing.SwingConstants.RIGHT);
+        lblUsuario.setVerticalAlignment(javax.swing.SwingConstants.BOTTOM);
+        lblUsuario.setMaximumSize(new java.awt.Dimension(820, 55));
+        lblUsuario.setMinimumSize(new java.awt.Dimension(820, 55));
+        lblUsuario.setPreferredSize(new java.awt.Dimension(820, 55));
+        jToolBar1.add(lblUsuario);
+        lblUsuario.getAccessibleContext().setAccessibleDescription("");
+
+        lblBrasao.setIcon(new javax.swing.ImageIcon("C:\\Myprogrm\\tessdatadb\\brasao sjn.png")); // NOI18N
+        lblBrasao.setMaximumSize(new java.awt.Dimension(1001, 836));
+        lblBrasao.setMinimumSize(new java.awt.Dimension(1001, 836));
+        lblBrasao.setPreferredSize(new java.awt.Dimension(1001, 836));
+
+        dtpPai.setLayer(lblBrasao, javax.swing.JLayeredPane.DEFAULT_LAYER);
+
         javax.swing.GroupLayout dtpPaiLayout = new javax.swing.GroupLayout(dtpPai);
         dtpPai.setLayout(dtpPaiLayout);
         dtpPaiLayout.setHorizontalGroup(
             dtpPaiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 946, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, dtpPaiLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lblBrasao, javax.swing.GroupLayout.PREFERRED_SIZE, 727, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(260, 260, 260))
         );
         dtpPaiLayout.setVerticalGroup(
             dtpPaiLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 524, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, dtpPaiLayout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(lblBrasao, javax.swing.GroupLayout.PREFERRED_SIZE, 822, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -264,7 +404,7 @@ public class frmPai extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(dtpPai)
-            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jToolBar1, javax.swing.GroupLayout.DEFAULT_SIZE, 1291, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -291,17 +431,36 @@ public class frmPai extends javax.swing.JFrame {
                              btnAbrirarquivo.setEnabled(true);
                              btnSalvar.setEnabled(false);
                              btnHabilitartexto.setEnabled(false);
+                             btnLogin.setEnabled(false);
+                             btnEntrarlogin.setEnabled(false);
+                             
+                             //btnAbrirarquivos.setEnabled(true);
+                             //btnNovodocumento.setEnabled(true);
+                             //txtBusca.setText("");
+                             //txtTexto.setText("");
+                             //lblFigura.setIcon(null);
+                             //tblModelos.removeAll();
+                             //txtQuantidadedocumentos.setText("0 Documentos");
+                             //txtTotalpalavras.setText("0 Palavras");
+               btnLogin.setEnabled(true);
+               btnEntrarlogin.setEnabled(true);
+               jProgressBar2.setVisible(false);
                         } catch (PropertyVetoException ex) {
                              Logger.getLogger(frmPai.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
             }else{
+                  if(frmLogin.getInstancia().isSelected() || frmEntrar.getInstancia().isSelected()){
+                     gerentedejanelas.fecharjanelas(frmLogin.getInstancia());
+                  }
                   try {
                        gerentedejanelas.abrirjanelas(frmScanner.getInstancia());
                        frmscanner.veiodopai();
                        btnAbrirarquivo.setEnabled(true);
                        btnSalvar.setEnabled(false);
                        btnHabilitartexto.setEnabled(false);
+                       btnLogin.setEnabled(false);
+                       btnEntrarlogin.setEnabled(false);
                   } catch (PropertyVetoException ex) {
                        Logger.getLogger(frmPai.class.getName()).log(Level.SEVERE, null, ex);
                   }
@@ -404,19 +563,34 @@ public class frmPai extends javax.swing.JFrame {
                              gerentedejanelas.abrirjanelas(frmArquivo.getInstancia());
                              btnAbrirarquivos.setEnabled(false);
                              btnNovodocumento.setEnabled(false);
+                             btnAbrirarquivo.setEnabled(false);
+                             btnHabilitartexto.setEnabled(false);
+                             btnSalvar.setEnabled(false);
+                             btnLogin.setEnabled(false);
+                             btnEntrarlogin.setEnabled(false);
+                             variavelglobal();
                         } catch (PropertyVetoException ex) {
                              Logger.getLogger(frmPai.class.getName()).log(Level.SEVERE, null, ex);
                         }
                     }
             }else{
+                  if(frmLogin.getInstancia().isSelected()){
+                     gerentedejanelas.fecharjanelas(frmLogin.getInstancia());
+                  }
                   try {
                        gerentedejanelas.abrirjanelas(frmArquivo.getInstancia());
                        btnAbrirarquivos.setEnabled(false);
                        btnNovodocumento.setEnabled(false);
+                       btnAbrirarquivo.setEnabled(false);
+                       btnHabilitartexto.setEnabled(false);
+                       btnSalvar.setEnabled(false);
+                       btnLogin.setEnabled(false);
+                       btnEntrarlogin.setEnabled(false);
+                       variavelglobal();
                   } catch (PropertyVetoException ex) {
                        Logger.getLogger(frmPai.class.getName()).log(Level.SEVERE, null, ex);
                   }
-            }
+            }         
     }//GEN-LAST:event_btnAbrirarquivosActionPerformed
 
     private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
@@ -441,13 +615,79 @@ public class frmPai extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_jButton2ActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        gerentedejanelas.fecharjanelas(frmLogin.getInstancia());
-    }//GEN-LAST:event_jButton1ActionPerformed
-
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
-        abrirlogin();
+        
+        gerentedejanelas.fecharjanelas(frmArquivo.getInstancia());
+        gerentedejanelas.fecharjanelas(frmScanner.getInstancia());
+        gerentedejanelas.fecharjanelas(frmEntrar.getInstancia());
+        frmLogin.getInstancia().toFront();
+        gerentedejanelas.fecharjanelas(frmLogin.getInstancia());
+        Usuario usuario = new Usuario();
+        usuario.setId(0);
+        usuario.setUsuario(null);
+        usuario.setAdmin(null);
+        btnNovodocumento.setEnabled(false);
+        btnAbrirarquivo.setEnabled(false);
+        btnHabilitartexto.setEnabled(false);
+        btnSalvar.setEnabled(false);
+        btnAbrirarquivos.setEnabled(false);
+        //btnLogin.setEnabled(false);
+        txtLognickentrar.requestFocus(true);
+        btnEntrar.setEnabled(true);
+        txtNome.setEnabled(false);
+        txtSenha.setEnabled(false);
+        txtConfsenha.setEnabled(false);
+        cbxAdministrador.setEnabled(false);
+        btnCadastro.setEnabled(false);
+        lblUsuario.setText("");
+        
+        if(dtpPai.getComponentCount() != 0){
+           dtpPai.removeAll();
+        }
+           SingletonModel.ABC obj = SingletonModel.ABC.INSTANCE;
+           obj.i = "";
+           abrirlogin();
+           
     }//GEN-LAST:event_btnLoginActionPerformed
+
+    private void btnEntrarloginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEntrarloginActionPerformed
+        gerentedejanelas.fecharjanelas(frmArquivo.getInstancia());
+        gerentedejanelas.fecharjanelas(frmScanner.getInstancia());
+        gerentedejanelas.fecharjanelas(frmLogin.getInstancia());
+        frmEntrar.getInstancia().toFront();
+        gerentedejanelas.fecharjanelas(frmEntrar.getInstancia());
+        Usuario usuario = new Usuario();
+        usuario.setId(0);
+        usuario.setUsuario(null);
+        usuario.setAdmin(null);
+        btnNovodocumento.setEnabled(false);
+        btnAbrirarquivo.setEnabled(false);
+        btnHabilitartexto.setEnabled(false);
+        btnSalvar.setEnabled(false);
+        btnAbrirarquivos.setEnabled(false);
+        btnLogin.setEnabled(false);
+           SingletonModel.ABC obj = SingletonModel.ABC.INSTANCE;
+           obj.i = "";
+           lblUsuario.setText("");
+           abrirentrar();
+           btnEntrar.setEnabled(true);
+           lblUsuario.setText("");
+           txtLognickentrar.requestFocus();
+           
+    }//GEN-LAST:event_btnEntrarloginActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+       if (frmscanner != null) {
+            try {
+                frmscanner.salvartexto();
+                //btnAbrirarquivo.setEnabled(false);
+                //btnHabilitartexto.setEnabled(false);
+                //btnSalvar.setEnabled(false);
+                //JOptionPane.showMessageDialog(null, "Nenhum arquivo a ser armazenado!");
+            } catch (Exception e) {
+            }
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -488,18 +728,21 @@ public class frmPai extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     public static javax.swing.JButton btnAbrirarquivo;
     public static javax.swing.JButton btnAbrirarquivos;
+    public static javax.swing.JButton btnEntrarlogin;
     public static javax.swing.JButton btnHabilitartexto;
-    private javax.swing.JButton btnLogin;
+    public static javax.swing.JButton btnLogin;
     public static javax.swing.JButton btnNovodocumento;
     public static javax.swing.JButton btnSalvar;
     private javax.swing.JButton btnScanner;
     public static javax.swing.JDesktopPane dtpPai;
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton2;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JToolBar.Separator jSeparator1;
     private javax.swing.JToolBar.Separator jSeparator2;
+    private javax.swing.JToolBar.Separator jSeparator3;
     private javax.swing.JToolBar jToolBar1;
+    private javax.swing.JLabel lblBrasao;
+    public static javax.swing.JLabel lblUsuario;
     // End of variables declaration//GEN-END:variables
 }

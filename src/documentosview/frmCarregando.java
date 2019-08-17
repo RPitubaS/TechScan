@@ -5,6 +5,7 @@
  */
 package documentosview;
 
+import static documentosview.frmPai.btnLogin;
 import java.awt.Dimension;
 import static java.lang.Thread.sleep;
 import java.text.ParseException;
@@ -37,7 +38,7 @@ public class frmCarregando extends javax.swing.JInternalFrame {
             //Logger.getLogger(frmCarregando.class.getName()).log(Level.SEVERE, null, ex);
         //}
         initComponents();
-        
+        btnLogin.setEnabled(false);
     }
     
     public void encheprogbar(){
@@ -76,6 +77,23 @@ public class frmCarregando extends javax.swing.JInternalFrame {
         lblCarregando = new javax.swing.JLabel();
 
         setFrameIcon(null);
+        addInternalFrameListener(new javax.swing.event.InternalFrameListener() {
+            public void internalFrameActivated(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameClosed(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameClosing(javax.swing.event.InternalFrameEvent evt) {
+                formInternalFrameClosing(evt);
+            }
+            public void internalFrameDeactivated(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameDeiconified(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameIconified(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameOpened(javax.swing.event.InternalFrameEvent evt) {
+            }
+        });
 
         pgbCarregando.setForeground(new java.awt.Color(51, 255, 0));
         pgbCarregando.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
@@ -108,6 +126,10 @@ public class frmCarregando extends javax.swing.JInternalFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void formInternalFrameClosing(javax.swing.event.InternalFrameEvent evt) {//GEN-FIRST:event_formInternalFrameClosing
+        btnLogin.setEnabled(true);
+    }//GEN-LAST:event_formInternalFrameClosing
 
      public void setPosicao(){
     

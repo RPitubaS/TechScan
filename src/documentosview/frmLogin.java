@@ -6,7 +6,12 @@
 package documentosview;
 
 import static documentosview.frmPai.btnAbrirarquivos;
+import static documentosview.frmPai.btnEntrarlogin;
+import static documentosview.frmPai.btnLogin;
 import static documentosview.frmPai.btnNovodocumento;
+import static documentosview.frmPai.lblUsuario;
+import java.awt.HeadlessException;
+import java.beans.PropertyVetoException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -17,8 +22,10 @@ import javax.swing.JDesktopPane;
 import javax.swing.JOptionPane;
 import modelo.bean.Usuario;
 import modelo.dao.DocumentosTextosDAO;
+import produzirconeccao.RefazerConexao;
 import util.EnviarEMail;
 import util.GerenteDeJanelas;
+import util.GuardarUrl;
 
 /**
  *
@@ -29,8 +36,9 @@ public class frmLogin extends javax.swing.JInternalFrame {
    GerenteDeJanelas gerentedejanelas;
     frmCarregando frmcarregando;
     private static frmLogin frmlogin;
-    private static JDesktopPane jdesktoppane;
+    String nomeusuario = "", tipousuario = "";
     
+   
     public static frmLogin getInstancia(){
           if(frmlogin == null){
              frmlogin = new frmLogin();
@@ -40,8 +48,8 @@ public class frmLogin extends javax.swing.JInternalFrame {
     
     public frmLogin() {
         initComponents();
-    }
-
+        btnEntrar.setEnabled(true);
+    }   
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -71,7 +79,25 @@ public class frmLogin extends javax.swing.JInternalFrame {
         jLabel8 = new javax.swing.JLabel();
         btnEntrar = new javax.swing.JButton();
         txtLogsenha = new javax.swing.JPasswordField();
+        jLabel3 = new javax.swing.JLabel();
 
+        addInternalFrameListener(new javax.swing.event.InternalFrameListener() {
+            public void internalFrameActivated(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameClosed(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameClosing(javax.swing.event.InternalFrameEvent evt) {
+                formInternalFrameClosing(evt);
+            }
+            public void internalFrameDeactivated(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameDeiconified(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameIconified(javax.swing.event.InternalFrameEvent evt) {
+            }
+            public void internalFrameOpened(javax.swing.event.InternalFrameEvent evt) {
+            }
+        });
         getContentPane().setLayout(null);
 
         jPanel1.setBackground(new java.awt.Color(0, 51, 51));
@@ -79,7 +105,7 @@ public class frmLogin extends javax.swing.JInternalFrame {
         jLabel1.setFont(new java.awt.Font("Arial", 1, 48)); // NOI18N
         jLabel1.setForeground(new java.awt.Color(255, 255, 204));
         jLabel1.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel1.setText("Cadastro");
+        jLabel1.setText("Usuários");
 
         jLabel2.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 204));
@@ -87,16 +113,28 @@ public class frmLogin extends javax.swing.JInternalFrame {
 
         txtNome.setBackground(new java.awt.Color(255, 255, 204));
         txtNome.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        txtNome.setToolTipText("Digite seu nome");
         txtNome.setEnabled(false);
+        txtNome.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtNomeKeyPressed(evt);
+            }
+        });
 
         btnCadastro.setBackground(new java.awt.Color(255, 255, 0));
         btnCadastro.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         btnCadastro.setForeground(new java.awt.Color(0, 0, 102));
-        btnCadastro.setText("Cadastre-se");
+        btnCadastro.setText("Incluir");
+        btnCadastro.setToolTipText("Incluir o Usuário");
         btnCadastro.setEnabled(false);
         btnCadastro.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCadastroActionPerformed(evt);
+            }
+        });
+        btnCadastro.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                btnCadastroKeyPressed(evt);
             }
         });
 
@@ -106,11 +144,16 @@ public class frmLogin extends javax.swing.JInternalFrame {
 
         txtSenha.setBackground(new java.awt.Color(255, 255, 204));
         txtSenha.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        txtSenha.setToolTipText("A senha deve conter no mínimo 6 dígitos.");
+        txtSenha.setToolTipText("Senha de no mínimo 6 digitos");
         txtSenha.setEnabled(false);
         txtSenha.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusGained(java.awt.event.FocusEvent evt) {
                 txtSenhaFocusGained(evt);
+            }
+        });
+        txtSenha.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtSenhaKeyPressed(evt);
             }
         });
 
@@ -120,18 +163,30 @@ public class frmLogin extends javax.swing.JInternalFrame {
 
         txtConfsenha.setBackground(new java.awt.Color(255, 255, 204));
         txtConfsenha.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
+        txtConfsenha.setToolTipText("Redigite a Senha");
         txtConfsenha.setEnabled(false);
         txtConfsenha.addFocusListener(new java.awt.event.FocusAdapter() {
             public void focusLost(java.awt.event.FocusEvent evt) {
                 txtConfsenhaFocusLost(evt);
             }
         });
+        txtConfsenha.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtConfsenhaKeyPressed(evt);
+            }
+        });
 
         cbxAdministrador.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         cbxAdministrador.setForeground(new java.awt.Color(255, 255, 204));
         cbxAdministrador.setText("Administrador");
+        cbxAdministrador.setToolTipText("Marque caso seja um administrador");
         cbxAdministrador.setEnabled(false);
         cbxAdministrador.setOpaque(false);
+        cbxAdministrador.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                cbxAdministradorKeyPressed(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -204,7 +259,12 @@ public class frmLogin extends javax.swing.JInternalFrame {
         jLabel6.setText("Nome:");
 
         txtLognick.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        txtLognick.setToolTipText("Digite o apelido cadastrado");
+        txtLognick.setToolTipText("Informe o Nome");
+        txtLognick.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtLognickKeyPressed(evt);
+            }
+        });
 
         jLabel7.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel7.setForeground(new java.awt.Color(0, 102, 204));
@@ -213,7 +273,7 @@ public class frmLogin extends javax.swing.JInternalFrame {
         jLabel8.setFont(new java.awt.Font("Arial", 1, 36)); // NOI18N
         jLabel8.setForeground(new java.awt.Color(0, 102, 204));
         jLabel8.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        jLabel8.setText("Login");
+        jLabel8.setText("Log In");
 
         btnEntrar.setBackground(new java.awt.Color(0, 102, 204));
         btnEntrar.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
@@ -223,9 +283,21 @@ public class frmLogin extends javax.swing.JInternalFrame {
                 btnEntrarActionPerformed(evt);
             }
         });
+        btnEntrar.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                btnEntrarKeyPressed(evt);
+            }
+        });
 
         txtLogsenha.setFont(new java.awt.Font("Tahoma", 0, 14)); // NOI18N
-        txtLogsenha.setToolTipText("Digite a senha correspondente ao apelido cadastrado");
+        txtLogsenha.setToolTipText("Informe a Senha");
+        txtLogsenha.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(java.awt.event.KeyEvent evt) {
+                txtLogsenhaKeyPressed(evt);
+            }
+        });
+
+        jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/documentosicons/iconfinder_Key_48x48.png"))); // NOI18N
 
         javax.swing.GroupLayout jPanel3Layout = new javax.swing.GroupLayout(jPanel3);
         jPanel3.setLayout(jPanel3Layout);
@@ -243,11 +315,13 @@ public class frmLogin extends javax.swing.JInternalFrame {
                             .addComponent(txtLognick)
                             .addComponent(txtLogsenha, javax.swing.GroupLayout.DEFAULT_SIZE, 215, Short.MAX_VALUE)))
                     .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(79, 79, 79)
-                        .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 215, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(55, Short.MAX_VALUE))
+                        .addGap(145, 145, 145)
+                        .addComponent(jLabel8)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 48, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(69, Short.MAX_VALUE))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGap(0, 0, Short.MAX_VALUE)
+                .addGap(0, 131, Short.MAX_VALUE)
                 .addComponent(btnEntrar, javax.swing.GroupLayout.PREFERRED_SIZE, 166, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(94, 94, 94))
         );
@@ -255,7 +329,9 @@ public class frmLogin extends javax.swing.JInternalFrame {
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGap(0, 5, Short.MAX_VALUE)
-                .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(33, 33, 33)
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -290,7 +366,7 @@ public class frmLogin extends javax.swing.JInternalFrame {
         );
 
         getContentPane().add(jPanel2);
-        jPanel2.setBounds(380, 0, 377, 440);
+        jPanel2.setBounds(380, 0, 391, 440);
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -322,17 +398,15 @@ public class frmLogin extends javax.swing.JInternalFrame {
                                selecao = "nao";
                            }
                            try{
+                              RefazerConexao rfc = new RefazerConexao();
+                              rfc.refazerconexao();
                               DocumentosTextosDAO dctsdao = new DocumentosTextosDAO();
                               dctsdao.salvar_usuarios(txtNome.getText(), txtConfsenha.getText(), selecao);
-                              txtNome.setText("");
-                              txtSenha.setText("");
-                              txtConfsenha.setText("");
-                              cbxAdministrador.setSelected(false);
-                              txtNome.setEnabled(false);
-                              txtSenha.setEnabled(false);
-                              txtConfsenha.setEnabled(false);
-                              cbxAdministrador.setEnabled(false);
-                              btnCadastro.setEnabled(false);
+                              txtLognick.setText(txtNome.getText());
+                              txtLogsenha.setText(txtConfsenha.getText());
+                              btnEntrar.setEnabled(true);
+                              btnEntrar.doClick();
+                              this.dispose();
                            }catch(Exception e){
                                  JOptionPane.showMessageDialog(null,"Erro: " + e + " ao tentar salvar, "
                                       + "confira as informações e tente novamente!");
@@ -360,9 +434,12 @@ public class frmLogin extends javax.swing.JInternalFrame {
     }//GEN-LAST:event_txtSenhaFocusGained
 
     private void btnEntrarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEntrarActionPerformed
-        int idusuario;
-        String nomeusuario = "", tipousuario = "";
-        try{
+      int idusuario;
+        if(!txtLognick.getText().equals("") && !txtLogsenha.getText().equals("")){
+        GuardarUrl guardarurl = new GuardarUrl();
+        String resultado = guardarurl.GetProp("conectar");
+                      RefazerConexao rfc = new RefazerConexao();
+                      rfc.refazerconexao();
         List<Usuario> selecionandousuario = new ArrayList<>();
         DocumentosTextosDAO dctdao = new DocumentosTextosDAO();
         selecionandousuario = dctdao.selecionarusuario(txtLogsenha.getText());
@@ -371,8 +448,10 @@ public class frmLogin extends javax.swing.JInternalFrame {
                        idusuario = usuario.getId();
                        nomeusuario = usuario.getUsuario();
                        tipousuario = usuario.getAdmin();
-                      };
-        if(tipousuario.equals("sim")){
+                      }
+        SingletonModel.ABC obj = SingletonModel.ABC.INSTANCE;
+        obj.i = tipousuario;
+        if(tipousuario.equals("sim") && nomeusuario.equals(txtLognick.getText())){
            cbxAdministrador.setSelected(false);
            txtNome.setEnabled(true);
            txtSenha.setEnabled(true);
@@ -382,30 +461,115 @@ public class frmLogin extends javax.swing.JInternalFrame {
            txtLognick.setText("");
            txtLogsenha.setText("");
            frmlogin.setClosable(true);
-           btnNovodocumento.setEnabled(true);
-           btnAbrirarquivos.setEnabled(true);
+           //btnNovodocumento.setEnabled(true);
+           //btnAbrirarquivos.setEnabled(true);
+           btnLogin.setEnabled(true);
+           btnEntrar.setEnabled(false);
+           btnEntrarlogin.setEnabled(true);
+           lblUsuario.setText("Usuário: " + nomeusuario);
         }else{
-           txtLognick.setText("");
-           txtLogsenha.setText("");
-           btnNovodocumento.setEnabled(true);
-           btnAbrirarquivos.setEnabled(true);
-           this.dispose();
-           jdesktoppane.remove(this);
+              if(tipousuario.equals("nao") && nomeusuario.equals(txtLognick.getText())){
+                 txtLognick.setText("");
+                 txtLogsenha.setText("");
+                 btnNovodocumento.setEnabled(true);
+                 btnAbrirarquivos.setEnabled(true);
+                 btnLogin.setEnabled(false);
+                 frmlogin.setClosable(false);
+                 btnEntrarlogin.setEnabled(true);
+                 lblUsuario.setText("Usuário: " + nomeusuario);
+                 this.dispose();
+              }else{
+                    JOptionPane.showMessageDialog(null, "Usuário e senha não conferem!");
+                    txtLognick.setText("");
+                    txtLogsenha.setText("");
+                    txtLognick.requestFocus(true);
+                    btnLogin.setEnabled(false);
+                   }
         }
-        }catch(Exception e){
-        }
+     }else{
+           txtLognick.requestFocus(true);
+     }
     }//GEN-LAST:event_btnEntrarActionPerformed
+
+    private void formInternalFrameClosing(javax.swing.event.InternalFrameEvent evt) {//GEN-FIRST:event_formInternalFrameClosing
+                              frmlogin.setClosable(false);  
+                              txtNome.setText("");
+                              txtSenha.setText("");
+                              txtConfsenha.setText("");
+                              cbxAdministrador.setSelected(false);
+                              txtNome.setEnabled(false);
+                              txtSenha.setEnabled(false);
+                              txtConfsenha.setEnabled(false);
+                              cbxAdministrador.setEnabled(false);
+                              btnCadastro.setEnabled(false);
+                              btnEntrar.setEnabled(true);
+                              txtLognick.setText("");
+                              txtLogsenha.setText("");
+    }//GEN-LAST:event_formInternalFrameClosing
+
+    private void txtNomeKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtNomeKeyPressed
+       if(evt.getKeyCode()== evt.VK_ENTER){
+                txtSenha.requestFocus();
+        }
+    }//GEN-LAST:event_txtNomeKeyPressed
+
+    private void txtSenhaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtSenhaKeyPressed
+       if(evt.getKeyCode()== evt.VK_ENTER){
+                txtConfsenha.requestFocus();
+        }
+    }//GEN-LAST:event_txtSenhaKeyPressed
+
+    private void txtConfsenhaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtConfsenhaKeyPressed
+        if(evt.getKeyCode()== evt.VK_ENTER){
+                cbxAdministrador.requestFocus();
+        }
+    }//GEN-LAST:event_txtConfsenhaKeyPressed
+
+    private void cbxAdministradorKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_cbxAdministradorKeyPressed
+         if(evt.getKeyCode()== evt.VK_ENTER){
+                btnCadastro.requestFocus();
+         }
+    }//GEN-LAST:event_cbxAdministradorKeyPressed
+
+    private void btnCadastroKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnCadastroKeyPressed
+        if(!txtNome.getText().equals("") && !txtSenha.getText().equals("") && !txtConfsenha.getText().equals("")){
+           if(evt.getKeyCode()== evt.VK_ENTER){
+                btnCadastro.doClick();
+        }
+        }
+    }//GEN-LAST:event_btnCadastroKeyPressed
+
+    private void txtLognickKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtLognickKeyPressed
+        if(evt.getKeyCode()== evt.VK_ENTER){
+                txtLogsenha.requestFocus();
+         }
+    }//GEN-LAST:event_txtLognickKeyPressed
+
+    private void txtLogsenhaKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_txtLogsenhaKeyPressed
+        if(evt.getKeyCode()== evt.VK_ENTER){
+                btnEntrar.requestFocus();
+         }
+    }//GEN-LAST:event_txtLogsenhaKeyPressed
+
+    private void btnEntrarKeyPressed(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_btnEntrarKeyPressed
+        if(!txtLognick.getText().equals("") && !txtLogsenha.getText().equals("")){
+           if(evt.getKeyCode()== evt.VK_ENTER){
+                btnEntrar.doClick();
+        }
+        }
+    }//GEN-LAST:event_btnEntrarKeyPressed
 
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton btnCadastro;
-    private javax.swing.JButton btnEntrar;
+    public static javax.swing.JButton btnCadastro;
+    public static javax.swing.JButton btnEntrar;
     private javax.swing.ButtonGroup buttonGroup1;
-    private javax.swing.JCheckBox cbxAdministrador;
+    public static javax.swing.JCheckBox cbxAdministrador;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
@@ -413,10 +577,10 @@ public class frmLogin extends javax.swing.JInternalFrame {
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPasswordField txtConfsenha;
-    private javax.swing.JTextField txtLognick;
-    private javax.swing.JPasswordField txtLogsenha;
-    private javax.swing.JTextField txtNome;
-    private javax.swing.JPasswordField txtSenha;
+    public static javax.swing.JPasswordField txtConfsenha;
+    public static javax.swing.JTextField txtLognick;
+    public static javax.swing.JPasswordField txtLogsenha;
+    public static javax.swing.JTextField txtNome;
+    public static javax.swing.JPasswordField txtSenha;
     // End of variables declaration//GEN-END:variables
 }

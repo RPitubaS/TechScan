@@ -23,7 +23,7 @@ public class UrlDao {
     String caminho = "src\\modelo\\bean\\Url";
     String caminhofinal = "";
     
-    public void pegaurl(){
+    public void pegaurl(String ip){
          
         JFileChooser escolherarquivo = new JFileChooser();
         escolherarquivo.setDialogTitle("Setar URL do Banco de Dados!");
@@ -46,11 +46,12 @@ public class UrlDao {
         
                   if(caminhofinal != guardarurl.GetProp("conectar")){
                        guardarurl.SaveProp("conectar", caminhofinal + "?encoding=WIN1252");
+                       guardarurl.SaveProp("IP", ip);
                        String arq = "";
                        enviandocaminho = caminhofinal + "?encoding=WIN1252";
                        //enviandocaminho = guardarurl.GetProp("conectar");
                        try {
-                           ConexaoFirebird conecta = new ConexaoFirebird(enviandocaminho);
+                           ConexaoFirebird conecta = new ConexaoFirebird(enviandocaminho, ip);
                            JOptionPane.showMessageDialog(null,"URL gravada com sucesso!");
                        } catch (ClassNotFoundException ex) {
                            JOptionPane.showMessageDialog(null,"Conexão não encontrada, URL desviada. " + ex,"TechScan",JOptionPane.WARNING_MESSAGE);

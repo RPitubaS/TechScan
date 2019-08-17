@@ -3,7 +3,9 @@ package documentosview;
 import static documentosview.frmPai.dtpPai;
 import static documentosview.frmPai.btnSalvar;
 import static documentosview.frmPai.btnAbrirarquivo;
+import static documentosview.frmPai.btnEntrarlogin;
 import static documentosview.frmPai.btnHabilitartexto;
+import static documentosview.frmPai.btnLogin;
 import java.awt.Color;
 import java.awt.Desktop;
 import java.beans.PropertyVetoException;
@@ -13,6 +15,8 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.ImageIcon;
@@ -30,14 +34,17 @@ import modelo.bean.ArquivoDocumentos;
 import modelo.dao.DocumentosTextosDAO;
 import modelo.dao.UrlDao;
 import produzirconeccao.ConexaoFirebird;
+import produzirconeccao.ConexaoFirebirdTexto;
 import produzirconeccao.RefazerConexao;
 import util.GerenteDeJanelas;
 import util.GuardarUrl;
 import util.SalvarDocumentos;
+import util.SalvarTextoParaArquivo;
 
 
 public class frmScanner extends javax.swing.JInternalFrame {
     
+    List<ArquivoDocumentos> selecionararquivosum = new ArrayList<>();
     JFileChooser selecionado = new JFileChooser();
     File arquivo;
     byte[] bytesimag;
@@ -102,20 +109,176 @@ public class frmScanner extends javax.swing.JInternalFrame {
              }
          }     
          
+         public void salvartexto() throws ParseException{
+  String umnome = "", umtexto = "";
+  
+  if(frmscanner.isSelected()){
+    if(frmscanner != null){
+         String tipododocumento = frmscanner.cmbTipodocumento.getSelectedItem().toString();
+         //GuardarUrl guardarurl = new GuardarUrl();
+         if(!frmscanner.txtNomedoarquivo.getText().trim().equals("") && !frmscanner.txtDocumentoemtexto.getText().trim().equals("")){
+             try {
+                 //String resultado = guardarurl.GetProp("conectar");
+                 //String ip = guardarurl.GetProp("IP");
+                 //RefazerConexao rfc = new RefazerConexao();
+                 //rfc.refazerconexao();
+                 ConexaoFirebirdTexto conect = new ConexaoFirebirdTexto();
+             } catch (ClassNotFoundException ex) {
+                 Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
+             } catch (SQLException ex) {
+                 Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
+             }
+             
+                      DocumentosTextosDAO dtdao = new DocumentosTextosDAO();
+                      SalvarTextoParaArquivo stpa = new SalvarTextoParaArquivo();
+                      
+       switch (tipododocumento){
+        
+            case "Decretos":           
+                        selecionararquivosum = dtdao.selecionardecretotexto(frmscanner.txtNomedoarquivo.getText());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(umnome.equals("")){
+                           int resultconfirm = JOptionPane.showConfirmDialog(null, "Salvar "+ frmscanner.txtNomedoarquivo.getText() + " no arquivo de decretos?",
+                           "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                             if(resultconfirm == 0){
+                                 new Thread(){
+                                     @Override
+                                     public void run(){
+                                  frmcarregando = new frmCarregando();
+                                  dtpPai.add(frmcarregando);
+                                  frmcarregando.setVisible(true);
+                                  frmcarregando.setPosicao();  
+                                  frmscanner.hide();
+                                 ArquivoDocumentos aqdc = new ArquivoDocumentos();
+                                 aqdc.setNomeDocumento((frmscanner.txtNomedoarquivo.getText()).trim());
+                                         //if(arquivo.getName().endsWith("pdf")){
+                                         //aqdc.setPdf("Sim");
+                                         //try {
+                                         //input = new FileInputStream(arquivo);
+                                         //aqdc.setArquivo(input);
+                                         //} catch (FileNotFoundException ex) {
+                                         //JOptionPane.showMessageDialog(null, "Não foi possível ler o arquivo PDF! " + ex);
+                                         //}
+                                         //bytesimag = null;
+                                         //}else{
+                                    String contendootexto = frmscanner.txtDocumentoemtexto.getText();
+                                    byte[] textoparaarquivo = contendootexto.getBytes();
+                                    aqdc.setFiguraDocumento(textoparaarquivo);
+                                    //input = null;
+                                 //}
+                                 //aqdc.setTextoDocumento(" " + (frmscanner.txtDocumentoemtexto.getText()).trim());
+                                 SalvarDocumentos salvdoc = new SalvarDocumentos();
+                                 salvdoc.salvatextodecreto(aqdc);
+                                 frmcarregando.dispose();
+                                 btnSalvar.setEnabled(false);
+                                 btnHabilitartexto.setEnabled(false);
+                                 btnAbrirarquivo.setEnabled(false);
+                                 frmscanner.show();
+                                   try {
+                                       frmcarregando.setClosed(true);
+                                   } catch (PropertyVetoException ex) {
+                                       Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
+                                   }
+                                  dtpPai.remove(frmcarregando);  
+                                  veiodopai();
+                                     }
+                                  }.start();
+                              }
+                        }else{
+                              JOptionPane.showMessageDialog(null,"Este nome de arquivo já esta sendo utilizado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                             }
+                        break;
+            case "Portarias":
+                        selecionararquivosum = dtdao.selecionarportariatexto(frmscanner.txtNomedoarquivo.getText());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(umnome.equals("")){
+                           int resultconfirm = JOptionPane.showConfirmDialog(null, "Salvar "+ frmscanner.txtNomedoarquivo.getText() + " no arquivo de portarias?",
+                           "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+                             if(resultconfirm == 0){
+                                new Thread(){
+                                     @Override
+                                     public void run(){
+                                  frmcarregando = new frmCarregando();
+                                  dtpPai.add(frmcarregando);
+                                  frmcarregando.setVisible(true);
+                                  frmcarregando.setPosicao();  
+                                  frmscanner.hide();
+                                 ArquivoDocumentos aqdc = new ArquivoDocumentos();
+                                 aqdc.setNomeDocumento((frmscanner.txtNomedoarquivo.getText()).trim());
+                                 //if(arquivo.getName().endsWith("pdf")){
+                                    //aqdc.setPdf("Sim");
+                                    //try {
+                                          //input = new FileInputStream(arquivo);
+                                         // aqdc.setArquivo(input);
+                                      //} catch (FileNotFoundException ex) {
+                                          //JOptionPane.showMessageDialog(null, "Não foi possível ler o arquivo PDF! " + ex);
+                                     //}
+                                    //bytesimag = null;
+                                 //}else{
+                                    String contendootexto = frmscanner.txtDocumentoemtexto.getText();
+                                    byte[] textoparaarquivo = contendootexto.getBytes();
+                                    aqdc.setFiguraDocumento(textoparaarquivo);
+                                    //input = null;
+                                 //}
+                                 //aqdc.setTextoDocumento(" " + (frmscanner.txtDocumentoemtexto.getText()).trim());
+                                 SalvarDocumentos salvdoc = new SalvarDocumentos();
+                                 salvdoc.salvatextoportaria(aqdc);
+                                 frmcarregando.dispose();
+                                 btnSalvar.setEnabled(false);
+                                 btnHabilitartexto.setEnabled(false);
+                                 btnAbrirarquivo.setEnabled(false);
+                                 frmscanner.show();
+                                   try {
+                                       frmcarregando.setClosed(true);
+                                   } catch (PropertyVetoException ex) {
+                                       Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
+                                   }
+                                  dtpPai.remove(frmcarregando);  
+                                  veiodopai();
+                                     }
+                                  }.start();
+                              }
+                        }else{
+                              JOptionPane.showMessageDialog(null,"Este nome de arquivo já esta sendo utilizado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                             }
+                break;    
+               
+        }        
+                   }else{
+                         JOptionPane.showMessageDialog(null, "É preciso um nome e um arquivo para ser arquivado!","TechScan",JOptionPane.INFORMATION_MESSAGE);
+                        }
+         
+         }
+    }
+         }
+         
          public void salvar() throws ParseException{
+  String umnome = "", umtexto = "";
   if(frmscanner.isSelected()){
     if(frmscanner != null){
          String tipododocumento = frmscanner.cmbTipodocumento.getSelectedItem().toString();
          GuardarUrl guardarurl = new GuardarUrl();
          if(!frmscanner.txtNomedoarquivo.getText().trim().equals("") && !frmscanner.txtDocumentoemtexto.getText().trim().equals("")){
                       String resultado = guardarurl.GetProp("conectar");
+                      String ip = guardarurl.GetProp("IP");
                       RefazerConexao rfc = new RefazerConexao();
                       rfc.refazerconexao();
                       DocumentosTextosDAO dtdao = new DocumentosTextosDAO();
         switch (tipododocumento){
         
             case "Decretos":           
-                        if(dtdao.selecionardecreto(frmscanner.txtNomedoarquivo.getText()).equals("")){
+                        selecionararquivosum = dtdao.selecionardecreto(frmscanner.txtNomedoarquivo.getText());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(umnome.equals("")){
                            int resultconfirm = JOptionPane.showConfirmDialog(null, "Salvar "+ frmscanner.txtNomedoarquivo.getText() + " no arquivo de decretos?",
                            "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                              if(resultconfirm == 0){
@@ -144,7 +307,7 @@ public class frmScanner extends javax.swing.JInternalFrame {
                                  }
                                  aqdc.setTextoDocumento(" " + (frmscanner.txtDocumentoemtexto.getText()).trim());
                                  SalvarDocumentos salvdoc = new SalvarDocumentos();
-                                 salvdoc.salvadecreto(aqdc, resultado);
+                                 salvdoc.salvadecreto(aqdc, resultado, ip);
                                  frmcarregando.dispose();
                                  btnSalvar.setEnabled(false);
                                  btnHabilitartexto.setEnabled(false);
@@ -165,7 +328,12 @@ public class frmScanner extends javax.swing.JInternalFrame {
                              }
                         break;
             case "Portarias":
-                        if(dtdao.selecionarportaria(frmscanner.txtNomedoarquivo.getText()).equals("")){
+                        selecionararquivosum = dtdao.selecionarportaria(frmscanner.txtNomedoarquivo.getText());
+                        for(ArquivoDocumentos arqdocs : selecionararquivosum){
+                            umnome = arqdocs.getNomeDocumento();
+                            umtexto = arqdocs.getTextoDocumento();
+                        }
+                        if(umnome.equals("")){
                            int resultconfirm = JOptionPane.showConfirmDialog(null, "Salvar "+ frmscanner.txtNomedoarquivo.getText() + " no arquivo de portarias?",
                            "TechScan", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
                              if(resultconfirm == 0){
@@ -194,7 +362,7 @@ public class frmScanner extends javax.swing.JInternalFrame {
                                  }
                                  aqdc.setTextoDocumento(" " + (frmscanner.txtDocumentoemtexto.getText()).trim());
                                  SalvarDocumentos salvdoc = new SalvarDocumentos();
-                                 salvdoc.salvaportaria(aqdc, resultado);
+                                 salvdoc.salvaportaria(aqdc, resultado, ip);
                                  frmcarregando.dispose();
                                  btnSalvar.setEnabled(false);
                                  btnHabilitartexto.setEnabled(false);
@@ -236,7 +404,7 @@ public class frmScanner extends javax.swing.JInternalFrame {
               if(arquivo.canRead()){
                  if(arquivo.getName().endsWith("pdf")){
                     
-                    ImageIcon icon = new ImageIcon("C:\\Myprogrm\\tessdatadb\\PDF.png");
+                    ImageIcon icon = new ImageIcon("C:\\Myprogrm\\tessdatadb\\pdf-icono-281x300.png");
                     icon.setImage(icon.getImage().getScaledInstance(frmscanner.lblDocumentoemimagem.getWidth(),frmscanner.lblDocumentoemimagem.getHeight(), 1));
                     frmscanner.lblDocumentoemimagem.setIcon(icon);   
                     try {
@@ -309,7 +477,11 @@ public class frmScanner extends javax.swing.JInternalFrame {
                   }
                }    
 
-  }        
+  }
+         
+         //public void salvar_textoparaarquivo(){
+            
+         //}
          
          public void veiodopai(){     
          frmscanner.lblDocumentoemimagem.setIcon(null);
@@ -317,7 +489,7 @@ public class frmScanner extends javax.swing.JInternalFrame {
          frmscanner.txtDocumentoemtexto.setText("");        
          }
          
-         public void gerentedeconexao(String resultado){
+         public void gerentedeconexao(String resultado, String ip){
              
          //GuardarUrl guardarurl = new GuardarUrl();
              
@@ -325,14 +497,14 @@ public class frmScanner extends javax.swing.JInternalFrame {
          try {
              
              if(resultado != null){
-             ConexaoFirebird conect = new ConexaoFirebird(resultado);
+             ConexaoFirebird conect = new ConexaoFirebird(resultado, ip);
              }else{
                   UrlDao url = new UrlDao();
-                  url.pegaurl();
+                  url.pegaurl(ip);
              }
          } catch (ClassNotFoundException ex) {
              UrlDao url = new UrlDao();
-             url.pegaurl();
+             url.pegaurl(ip);
              
          } catch (SQLException ex) {
 
@@ -731,6 +903,8 @@ public class frmScanner extends javax.swing.JInternalFrame {
            btnHabilitartexto.setEnabled(false);
            btnSalvar.setEnabled(false);
         }
+        btnLogin.setEnabled(true);
+        btnEntrarlogin.setEnabled(true);
     }//GEN-LAST:event_formInternalFrameClosing
 
     private void formInternalFrameDeactivated(javax.swing.event.InternalFrameEvent evt) {//GEN-FIRST:event_formInternalFrameDeactivated
@@ -754,7 +928,7 @@ public class frmScanner extends javax.swing.JInternalFrame {
     private javax.swing.JLabel lblDocumentoemimagem1;
     private javax.swing.JLabel lblDocumentos;
     private javax.swing.JLabel lblDocumentos1;
-    private javax.swing.JTextArea txtDocumentoemtexto;
+    public static javax.swing.JTextArea txtDocumentoemtexto;
     private javax.swing.JTextArea txtDocumentoemtexto1;
     private javax.swing.JTextField txtNomedoarquivo;
     private javax.swing.JTextField txtNomedoarquivo1;

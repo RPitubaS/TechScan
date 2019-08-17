@@ -21,10 +21,10 @@ import produzirconeccao.ConexaoFirebird;
  * @author Pituba
  */
 public class AtualizarDocumentos {
-    public void atualizadecreto(ArquivoDocumentos aq, String resultado){
+    public void atualizadecreto(ArquivoDocumentos aq, String resultado, String ip){
            
         try {
-            ConexaoFirebird confb = new ConexaoFirebird(resultado);
+            ConexaoFirebird confb = new ConexaoFirebird(resultado, ip);
         } catch (ClassNotFoundException ex) {
             JOptionPane.showMessageDialog(null, "Sem conexão! "+ex, "TechScan", JOptionPane.WARNING_MESSAGE);
         } catch (SQLException ex) {
@@ -40,10 +40,10 @@ public class AtualizarDocumentos {
                                  //frmscanner.veiodopai();
          }
     
-    public void atualizaportaria(ArquivoDocumentos aq, String resultado){
+    public void atualizaportaria(ArquivoDocumentos aq, String resultado, String ip){
     
         try {
-            ConexaoFirebird confb = new ConexaoFirebird(resultado);
+            ConexaoFirebird confb = new ConexaoFirebird(resultado, ip);
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(frmScanner.class.getName()).log(Level.SEVERE, null, ex);
         } catch (SQLException ex) {
